@@ -1,6 +1,13 @@
+import io
 import re
-import streamlit as st
 from datetime import date
+from xml.sax.saxutils import escape
+
+import streamlit as st
+from reportlab.lib.pagesizes import LETTER
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
 
 st.set_page_config(page_title="KDPEasy Clipart & Mockup Kit", page_icon="\U0001F3A8", layout="centered")
 
@@ -477,6 +484,63 @@ def build_explain_prompt(description: str, mode: str) -> str:
 
 
 # ----------------------------------------------------------------------------
+# PDF export. Bundles whatever has been built so far into one gift-ready file -
+# so this can be handed to a buyer or an affiliate's list without them ever
+# needing to open the tool themselves.
+# ----------------------------------------------------------------------------
+def _pdf_block(text: str, style):
+    """Paragraph wraps long lines (Preformatted does not), which matters since
+    some prompt lines run well past a page's width."""
+    html = escape(text).replace("\n", "<br/>")
+    return Paragraph(html, style)
+
+
+def build_pdf_bytes(pack_title: str, mode: str, shotlist_prompt, item_prompts, cover_prompt) -> bytes:
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buf, pagesize=LETTER,
+        topMargin=0.75 * inch, bottomMargin=0.75 * inch,
+        leftMargin=0.75 * inch, rightMargin=0.75 * inch,
+    )
+    styles = getSampleStyleSheet()
+    code_style = styles["Code"]
+    code_style.fontSize = 8.5
+    code_style.leading = 11
+
+    story = [
+        Paragraph(escape(pack_title or f"{mode} Prompt Pack"), styles["Title"]),
+        Paragraph(escape(mode), styles["Normal"]),
+        Spacer(1, 0.3 * inch),
+    ]
+
+    if shotlist_prompt:
+        story.append(Paragraph("Step 1 - paste this into ChatGPT first", styles["Heading2"]))
+        story.append(_pdf_block(shotlist_prompt, code_style))
+        story.append(Spacer(1, 0.3 * inch))
+
+    if item_prompts:
+        story.append(Paragraph(
+            "Step 2 - paste ChatGPT's reply into the kit, then run each prompt below "
+            "in the same chat", styles["Heading2"],
+        ))
+        for i, (name, prompt) in enumerate(item_prompts):
+            story.append(Paragraph(f"{i + 1}. {escape(name)}", styles["Heading3"]))
+            story.append(_pdf_block(prompt, code_style))
+            story.append(Spacer(1, 0.15 * inch))
+
+    if cover_prompt:
+        story.append(PageBreak())
+        story.append(Paragraph("Step 3 - collection cover prompt", styles["Heading2"]))
+        story.append(_pdf_block(cover_prompt, code_style))
+
+    story.append(Spacer(1, 0.4 * inch))
+    story.append(Paragraph("KDPEasy Studio - kdpeasy.studio", styles["Normal"]))
+
+    doc.build(story)
+    return buf.getvalue()
+
+
+# ----------------------------------------------------------------------------
 # UI
 # ----------------------------------------------------------------------------
 if not check_password():
@@ -708,6 +772,28 @@ with tab3:
         st.download_button("Download this prompt (.txt)", out3, file_name="step3_cover_prompt.txt")
     else:
         st.caption("Fill in Step 2's shot list first, then click \"Build collection cover prompt\".")
+
+st.divider()
+st.subheader("Package this as a gift")
+st.caption(
+    "Bundles everything you've built above into one PDF - attach it to an email or a thank-you "
+    "page without the recipient needing to open this tool at all."
+)
+pack_title = st.text_input("Pack title for the PDF", value=theme or f"{mode} Prompt Pack")
+
+shotlist_prompt_now = _recall("shotlist_prompt", sig1)
+item_prompts_now = _recall("item_prompts", sig2)
+cover_prompt_now = _recall("cover_prompt", sig3)
+
+if not shotlist_prompt_now and not item_prompts_now:
+    st.caption("Build Step 1 and Step 2 above first, then come back here to download the PDF.")
+else:
+    pdf_bytes = build_pdf_bytes(pack_title, mode, shotlist_prompt_now, item_prompts_now, cover_prompt_now)
+    safe_name = re.sub(r"[^A-Za-z0-9_-]+", "_", pack_title.strip()) or "prompt_pack"
+    st.download_button(
+        "Download full prompt pack (PDF)", pdf_bytes,
+        file_name=f"{safe_name}.pdf", mime="application/pdf",
+    )
 
 st.divider()
 st.caption("KDPEasy Studio - kdpeasy.studio")
