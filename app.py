@@ -514,14 +514,14 @@ def build_pdf_bytes(pack_title: str, mode: str, shotlist_prompt, item_prompts, c
     ]
 
     if shotlist_prompt:
-        story.append(Paragraph("Step 1 - paste this into ChatGPT first", styles["Heading2"]))
+        story.append(Paragraph("Paste this into ChatGPT first", styles["Heading2"]))
         story.append(_pdf_block(shotlist_prompt, code_style))
         story.append(Spacer(1, 0.3 * inch))
 
     if item_prompts:
         story.append(Paragraph(
-            "Step 2 - paste ChatGPT's reply into the kit, then run each prompt below "
-            "in the same chat", styles["Heading2"],
+            "Run each prompt below in ChatGPT, in the same chat so everything matches",
+            styles["Heading2"],
         ))
         for i, (name, prompt) in enumerate(item_prompts):
             story.append(Paragraph(f"{i + 1}. {escape(name)}", styles["Heading3"]))
@@ -530,7 +530,7 @@ def build_pdf_bytes(pack_title: str, mode: str, shotlist_prompt, item_prompts, c
 
     if cover_prompt:
         story.append(PageBreak())
-        story.append(Paragraph("Step 3 - collection cover prompt", styles["Heading2"]))
+        story.append(Paragraph("Collection cover prompt - paste this into ChatGPT", styles["Heading2"]))
         story.append(_pdf_block(cover_prompt, code_style))
 
     story.append(Spacer(1, 0.4 * inch))
