@@ -5,10 +5,10 @@ from datetime import date
 st.set_page_config(page_title="KDPEasy Clipart & Mockup Kit", page_icon="\U0001F3A8", layout="centered")
 
 # ----------------------------------------------------------------------------
-# Access. v1 = single tier, no OTOs yet - the funnel split (cleanup pass /
-# matching paper / Etsy+TPT listing helper) is still being decided. Add more
-# entries here later the same way Storybook Prompt Kit's PASSWORDS dict does.
-# "expires": None = permanent, or a datetime.date for a trial password.
+# Access. v1 = single tier, no OTOs yet - the funnel split is still being
+# decided. Add more entries here later the same way Storybook Prompt Kit's
+# PASSWORDS dict does. "expires": None = permanent, or a datetime.date for a
+# trial password.
 # ----------------------------------------------------------------------------
 PASSWORDS = {
     "KDPCLIPART2026": {"expires": None},
@@ -76,6 +76,9 @@ def _recall(key, sig):
 # it gets pasted into ChatGPT, so no smart quotes / em dashes.
 # ----------------------------------------------------------------------------
 
+NO_EDIT_LINE = ("Draw this as a brand-new image from the brief below - not an edit of any "
+                "image already in this chat, and no uploaded reference picture is needed either.")
+
 CLIPART_STYLES = {
     "Flat vector": ("flat vector clipart: solid flat colors, clean even outlines, "
                      "no gradients, no texture, no shadow"),
@@ -85,66 +88,184 @@ CLIPART_STYLES = {
                             "uneven linework, flat color fill, no shadow"),
 }
 
-BG_OPTIONS = {
-    "Transparent": "a fully transparent background (PNG-ready, nothing behind the object)",
-    "Plain white": "a plain solid white background",
-}
-
 MOCKUP_STYLES = {
     "Flatlay": "a bright flatlay scene shot from directly above, soft natural light, a few simple props",
     "Lifestyle": "a lifestyle scene with the product shown in natural use, soft daylight, an uncluttered background",
     "Clean studio": "a clean studio product shot, plain seamless background, soft even lighting, no extra props",
 }
 
-MODES = ["Clipart set", "Listing mockup scenes"]
+PAPER_STYLES = {
+    "Flat geometric": "flat geometric shapes in a bright, limited color palette, simple repeating motif",
+    "Soft watercolor": "soft painted watercolor motifs with gentle color bleed and a light, airy feel",
+    "Hand-drawn doodle": "playful hand-drawn doodle motifs, loose uneven linework, flat color fill",
+}
 
-NO_EDIT_LINE = ("Draw this as a brand-new image from the brief below - not an edit of any "
-                "image already in this chat, and no uploaded reference picture is needed either.")
+STICKER_STYLES = {
+    "Bold & cute": "bold, cheerful sticker art: thick clean outlines, bright flat colors, rounded friendly shapes",
+    "Soft pastel": "soft pastel sticker art: gentle rounded shapes, muted colors, a light clean outline",
+    "Hand-drawn": "hand-drawn sticker art: a loose sketchy outline, playful uneven linework, flat color fill",
+}
 
-ITEM_MARKER = "ITEM"
-SCENE_MARKER = "SCENE"
+DECOR_STYLES = {
+    "Bold & bright": "bold classroom decor art: thick clean outlines, bright saturated flat colors, easy to read from across a room",
+    "Soft pastel": "soft pastel classroom decor art: gentle rounded shapes, light muted colors, a clean simple outline",
+    "Chalkboard": "a chalkboard-style look: clean white or pastel chalk-line art on a solid dark background",
+}
+
+BG_OPTIONS = {
+    "Transparent": "a fully transparent background (PNG-ready, nothing behind the object)",
+    "Plain white": "a plain solid white background",
+}
+
+# Settings shared by the generic (non-mockup, non-mascot) modes: UI labels,
+# the count field, the style menu, and how background is handled.
+#   bg: "choose"  -> customer picks Transparent / Plain white
+#       "forced_transparent" / "forced_white" -> fixed, no selector shown
+#       "none" -> no background line at all (pattern fills the whole canvas)
+MODE_UI = {
+    "Clipart set": {
+        "count_label": "Number of elements",
+        "count_default": 12, "count_min": 4, "count_max": 40,
+        "styles": CLIPART_STYLES,
+        "bg": "choose",
+    },
+    "Listing mockup scenes": {
+        "count_label": "Number of mockup scenes",
+        "count_default": 6, "count_min": 3, "count_max": 12,
+        "styles": MOCKUP_STYLES,
+        "bg": "none",
+    },
+    "Digital paper pack": {
+        "count_label": "Number of pattern designs",
+        "count_default": 8, "count_min": 4, "count_max": 20,
+        "styles": PAPER_STYLES,
+        "bg": "none",
+    },
+    "Planner stickers": {
+        "count_label": "Number of stickers",
+        "count_default": 16, "count_min": 4, "count_max": 40,
+        "styles": STICKER_STYLES,
+        "bg": "forced_transparent",
+    },
+    "Classroom decor set": {
+        "count_label": "Number of decor elements",
+        "count_default": 10, "count_min": 4, "count_max": 30,
+        "styles": DECOR_STYLES,
+        "bg": "forced_white",
+    },
+}
+MASCOT_MODE = "Mascot pose pack"
+MODES = list(MODE_UI.keys()) + [MASCOT_MODE]
+
+MARKERS = {
+    "Clipart set": "ITEM",
+    "Listing mockup scenes": "SCENE",
+    "Digital paper pack": "PATTERN",
+    "Planner stickers": "STICKER",
+    "Classroom decor set": "ITEM",
+    MASCOT_MODE: "POSE",
+}
+
+OPENER = {
+    "Clipart set": "a themed clipart set",
+    "Listing mockup scenes": "listing preview images for a product",
+    "Digital paper pack": "a themed digital paper (pattern) pack",
+    "Planner stickers": "a themed planner sticker pack",
+    "Classroom decor set": "a themed classroom decor set",
+}
+
+NOUNS = {
+    "Clipart set": "individual clipart elements",
+    "Listing mockup scenes": "different mockup scene ideas",
+    "Digital paper pack": "pattern designs",
+    "Planner stickers": "individual sticker ideas",
+    "Classroom decor set": "individual decor elements",
+}
+
+ITEM_GUIDANCE = {
+    "Clipart set": "Each one should be simple and recognizable on its own, not a busy scene.",
+    "Listing mockup scenes": "Each scene should be a different setting or angle, not a repeat of the same idea.",
+    "Digital paper pack": "Each one should be a distinct color-and-motif combination that could repeat seamlessly as a background pattern.",
+    "Planner stickers": "Each one should be a single simple icon, tracker, or short-phrase idea - the kind of small sticker someone adds to a planner page.",
+    "Classroom decor set": "Each one should be a distinct, simple decor piece (a label, a border motif, a small graphic), not a busy scene.",
+}
+
+DESC_GUIDANCE = {
+    "Clipart set": "one plain sentence describing what it looks like (shape, pose, key details only)",
+    "Listing mockup scenes": "one plain sentence describing the setting, props, and camera angle (do not mention the product itself - that gets added separately)",
+    "Digital paper pack": 'one plain sentence describing the color palette and motif (for example, "mustard and cream, small falling leaves")',
+    "Planner stickers": "one plain sentence describing the icon and any short text on it",
+    "Classroom decor set": "one plain sentence describing what it looks like and what it is for (border strip, label, banner piece, and so on)",
+}
+
+CLOSING_LINE = {
+    "Clipart set": ("One isolated object, centered in the frame. No shadow, no text, no border, "
+                     "no extra scenery. Match the line weight and color palette used for the "
+                     "rest of this set."),
+    "Digital paper pack": ("Make this a seamless, tileable pattern - the design must repeat edge "
+                            "to edge with no visible seam, no single focal point, flat even "
+                            "coverage across the whole canvas."),
+    "Planner stickers": ("One isolated sticker, centered in the frame, with a clean white border "
+                          "about 2 to 3 mm wide outlining its shape like a die-cut line. No "
+                          "background scenery."),
+    "Classroom decor set": ("One isolated decor element, centered in the frame, bold and simple "
+                             "enough to read from across a room. Sized to print, cut out, and "
+                             "laminate."),
+}
 
 
 def marker_for(mode: str) -> str:
-    return ITEM_MARKER if mode == "Clipart set" else SCENE_MARKER
+    return MARKERS[mode]
 
 
 def build_shotlist_prompt(mode: str, theme: str, count: int, style_desc: str, bg_desc) -> str:
     marker = marker_for(mode)
     last = f"{marker} {count:02d}"
-    if mode == "Clipart set":
-        return (
-            f"You are helping me plan a themed clipart set.\n\n"
-            f"THEME: {theme}\n\n"
-            f"Give me a shot list of {count} individual clipart elements that fit this theme. "
-            f"Each one should be simple and recognizable on its own, not a busy scene.\n\n"
-            f"Output format, exactly like this for every item:\n"
-            f"=== {marker} 01 ===\n"
-            f"NAME: short name of the object\n"
-            f"DESCRIPTION: one plain sentence describing what it looks like (shape, pose, key details only)\n"
-            f"=== {marker} 02 ===\n"
-            f"...continue through {last}\n\n"
-            f"Style for reference (do not repeat this in the list): {style_desc}, on {bg_desc}.\n"
-            f"Keep descriptions concrete and visual. No mood, lighting, or rendering language. "
-            f"Avoid near-duplicate items."
-        )
-    else:
-        return (
-            f"You are helping me plan listing preview images for a product.\n\n"
-            f"PRODUCT OR THEME: {theme}\n\n"
-            f"Give me {count} different mockup scene ideas for showing this product in a product "
-            f"listing photo. Each scene should be a different setting or angle, not a repeat of "
-            f"the same idea.\n\n"
-            f"Output format, exactly like this for every scene:\n"
-            f"=== {marker} 01 ===\n"
-            f"NAME: short name for the scene\n"
-            f"DESCRIPTION: one plain sentence describing the setting, props, and camera angle "
-            f"(do not mention the product itself - that gets added separately)\n"
-            f"=== {marker} 02 ===\n"
-            f"...continue through {last}\n\n"
-            f"Style for reference (do not repeat this in the list): {style_desc}.\n"
-            f"Keep each scene concrete and visual. Avoid near-duplicate scenes."
-        )
+    theme_word = "PRODUCT OR THEME" if mode == "Listing mockup scenes" else "THEME"
+    style_line = f"Style for reference (do not repeat this in the list): {style_desc}"
+    style_line += f", on {bg_desc}." if bg_desc else "."
+    return (
+        f"You are helping me plan {OPENER[mode]}.\n\n"
+        f"{theme_word}: {theme}\n\n"
+        f"Give me a shot list of {count} {NOUNS[mode]} that fit this. {ITEM_GUIDANCE[mode]}\n\n"
+        f"Output format, exactly like this for every item:\n"
+        f"=== {marker} 01 ===\n"
+        f"NAME: short name\n"
+        f"DESCRIPTION: {DESC_GUIDANCE[mode]}\n"
+        f"=== {marker} 02 ===\n"
+        f"...continue through {last}\n\n"
+        f"{style_line}\n"
+        f"Keep descriptions concrete and visual. No mood, lighting, or rendering language. "
+        f"Avoid near-duplicate items."
+    )
+
+
+def build_mascot_shotlist_prompt(character_desc: str, count: int, style_desc: str) -> str:
+    marker = marker_for(MASCOT_MODE)
+    return (
+        f"You are helping me plan a consistent mascot character for reuse across many images.\n\n"
+        f"CHARACTER: {character_desc}\n\n"
+        f"First, write a short CHARACTER BIBLE that fixes the parts of this character that must "
+        f"never change: species or type, body shape, face, colors, and any clothing or "
+        f"accessories. Output it between these markers:\n"
+        f"=== CHARACTER BIBLE START ===\n"
+        f"(the bible, 3 to 5 sentences)\n"
+        f"=== CHARACTER BIBLE END ===\n\n"
+        f"Then give me a shot list of {count} different poses, expressions, or simple actions "
+        f"for this same character - things that CAN change from image to image (pose, "
+        f"expression, gesture, camera angle). Do not change anything listed in the Character "
+        f"Bible.\n\n"
+        f"Output format, exactly like this for every pose:\n"
+        f"=== {marker} 01 ===\n"
+        f"NAME: short name for the pose\n"
+        f"DESCRIPTION: one plain sentence describing the pose, expression, or action only (do "
+        f"not repeat the character's fixed appearance)\n"
+        f"=== {marker} 02 ===\n"
+        f"...continue through {marker} {count:02d}\n\n"
+        f"Style for reference (do not repeat this in the list): {style_desc}, on a transparent "
+        f"background.\n"
+        f"Keep poses concrete and visual. Avoid near-duplicate poses."
+    )
 
 
 def parse_items(raw: str, mode: str):
@@ -164,14 +285,20 @@ def parse_items(raw: str, mode: str):
     return items
 
 
-def build_clipart_item_prompt(name: str, desc: str, style_desc: str, bg_desc: str) -> str:
+def parse_mascot_bible(raw: str) -> str:
+    m = re.search(r'CHARACTER BIBLE START\s*=*\s*(.*?)\s*=*\s*CHARACTER BIBLE END',
+                  raw, re.IGNORECASE | re.DOTALL)
+    return m.group(1).strip() if m else ""
+
+
+def build_item_prompt(mode: str, name: str, desc: str, style_desc: str, bg_desc) -> str:
+    bg_line = f"BACKGROUND: {bg_desc}.\n" if bg_desc else ""
     return (
         f"{NO_EDIT_LINE}\n\n"
         f"STYLE: {style_desc}.\n"
-        f"BACKGROUND: {bg_desc}.\n"
+        f"{bg_line}"
         f"SUBJECT: {name} - {desc}\n\n"
-        f"One isolated object, centered in the frame. No shadow, no text, no border, no extra "
-        f"scenery. Match the line weight and color palette used for the rest of this set."
+        f"{CLOSING_LINE[mode]}"
     )
 
 
@@ -188,12 +315,28 @@ def build_mockup_item_prompt(name: str, desc: str, style_desc: str) -> str:
     )
 
 
-def build_collection_cover_prompt(mode: str, items, style_desc: str, bg_desc, title: str) -> str:
+def build_mascot_pose_prompt(bible: str, name: str, desc: str, style_desc: str) -> str:
+    return (
+        f"{NO_EDIT_LINE}\n\n"
+        f"CHARACTER (keep exactly as described, do not change): {bible}\n\n"
+        f"STYLE: {style_desc}.\n"
+        f"BACKGROUND: {BG_OPTIONS['Transparent']}.\n"
+        f"POSE: {name} - {desc}\n\n"
+        f"Give this image its own fresh pose and expression as described above - do not reuse "
+        f"the pose or expression from another image. One isolated character, centered in the "
+        f"frame. No shadow, no text, no border, no extra scenery."
+    )
+
+
+def build_collection_cover_prompt(mode: str, items, style_desc: str, bg_desc, title: str,
+                                   character_bible: str = "") -> str:
     """One listing/cover photo showing the whole set together - the main thumbnail
     buyers see on Etsy or TPT before they open the listing."""
-    noun = "clipart elements" if mode == "Clipart set" else "scenes"
+    noun = "poses" if mode == MASCOT_MODE else NOUNS.get(mode, "items")
     listing = "\n".join(f"- {name}: {desc}" for name, desc in items)
     bg_line = f"BACKGROUND: {bg_desc}.\n" if bg_desc else ""
+    bible_line = (f"CHARACTER (keep exactly as described): {character_bible}\n\n"
+                  if character_bible else "")
     title_line = (
         f'Add the text "{title}" as a small, clean label near the top of the image.\n'
         if title.strip() else ""
@@ -201,6 +344,7 @@ def build_collection_cover_prompt(mode: str, items, style_desc: str, bg_desc, ti
     return (
         f"Create ONE image that works as a single cover/preview photo for this set - the main "
         f"thumbnail a shopper sees before opening the listing.\n\n"
+        f"{bible_line}"
         f"Arrange all {len(items)} {noun} below together in a tidy grid or flat-lay layout, each "
         f"one fully visible, evenly spaced, not overlapping or cropped.\n\n"
         f"ITEMS:\n{listing}\n\n"
@@ -220,7 +364,7 @@ if not check_password():
 st.title("\U0001F3A8 KDPEasy Clipart & Mockup Kit")
 st.caption(
     "Type a theme, get a prompt for ChatGPT. Paste its reply back, get one ready-to-run "
-    "image prompt per item - clipart elements or listing mockup scenes, your choice."
+    "image prompt per item."
 )
 
 use_mode = st.radio(
@@ -231,13 +375,17 @@ use_mode = st.radio(
 if use_mode == "Use as a promo bonus":
     theme_label = "Product or niche you are promoting"
     theme_help = "The affiliate offer's theme - the set is built to match it, ready to hand out as a bonus."
-    theme_default = ""
 else:
     theme_label = "Theme"
     theme_help = 'What the whole set is about. Keep it specific - "Cozy Autumn Harvest" beats "Fall".'
-    theme_default = ""
 
-mode = st.radio("What do you want to create?", MODES, horizontal=True)
+mode = st.radio("What do you want to create?", MODES)
+
+if mode == MASCOT_MODE:
+    theme_label = "Character description"
+    theme_help = ('Describe the character\'s fixed look: species, colors, outfit, any '
+                  'accessories. Example: "a friendly orange fox with a round body, big eyes, '
+                  'and a green knit scarf".')
 
 with st.expander("How this kit works"):
     st.markdown(
@@ -248,12 +396,18 @@ with st.expander("How this kit works"):
         "4. Run each Step 2 prompt in the same ChatGPT chat so everything matches.\n"
         "5. Step 3 builds one more prompt: a single cover photo showing the whole set together "
         "- the main listing thumbnail for Etsy or TPT.\n\n"
-        "**Clipart set** - isolated objects, transparent or white background, for a themed "
-        "graphics pack.\n\n"
+        "**Clipart set** - isolated objects, transparent or white background.\n\n"
         "**Listing mockup scenes** - upload a real screenshot or page of your product first; "
-        "each prompt places it into a styled scene for your Etsy or TPT listing photos. "
-        "Note: ChatGPT does not always keep the uploaded content perfectly untouched - check "
-        "each result before using it.\n\n"
+        "each prompt places it into a styled scene for an Etsy or TPT listing photo. ChatGPT "
+        "does not always keep the uploaded content perfectly untouched - check each result.\n\n"
+        "**Digital paper pack** - seamless tileable background patterns, usually sold alongside "
+        "a matching clipart set.\n\n"
+        "**Planner stickers** - transparent die-cut-style stickers for digital or printed "
+        "planners.\n\n"
+        "**Classroom decor set** - bulletin board and labeling graphics, printed and laminated.\n\n"
+        "**Mascot pose pack** - one consistent character in many poses, for a recurring brand "
+        "or classroom mascot. Step 1 also writes a Character Bible that every pose reuses so "
+        "the character does not drift.\n\n"
         "**About the Step 3 cover:** it draws a brand-new illustration of the whole set "
         "together, so it may look slightly different from the individual images from Step 2. "
         "It is a fast way to get a listing photo. For a pixel-exact thumbnail, arrange your "
@@ -263,24 +417,38 @@ with st.expander("How this kit works"):
 tab1, tab2, tab3 = st.tabs(["Step 1 - Shot list", "Step 2 - Image prompts", "Step 3 - Collection cover"])
 
 with tab1:
-    theme = st.text_input(theme_label, value=theme_default, help=theme_help)
+    theme = st.text_input(theme_label, help=theme_help)
 
-    if mode == "Clipart set":
-        count = st.number_input("Number of elements", min_value=4, max_value=40, value=12)
+    if mode == MASCOT_MODE:
+        count = st.number_input("Number of poses", min_value=4, max_value=30, value=10)
         style_name = st.selectbox("Style", list(CLIPART_STYLES.keys()))
         style_desc = CLIPART_STYLES[style_name]
-        bg_name = st.selectbox("Background", list(BG_OPTIONS.keys()))
-        bg_desc = BG_OPTIONS[bg_name]
+        bg_desc = BG_OPTIONS["Transparent"]
+        st.caption("Background: transparent (fixed, so the character drops into anything).")
     else:
-        count = st.number_input("Number of mockup scenes", min_value=3, max_value=12, value=6)
-        style_name = st.selectbox("Style", list(MOCKUP_STYLES.keys()))
-        style_desc = MOCKUP_STYLES[style_name]
-        bg_desc = None
+        cfg = MODE_UI[mode]
+        count = st.number_input(cfg["count_label"], min_value=cfg["count_min"],
+                                 max_value=cfg["count_max"], value=cfg["count_default"])
+        style_name = st.selectbox("Style", list(cfg["styles"].keys()))
+        style_desc = cfg["styles"][style_name]
+        if cfg["bg"] == "choose":
+            bg_name = st.selectbox("Background", list(BG_OPTIONS.keys()))
+            bg_desc = BG_OPTIONS[bg_name]
+        elif cfg["bg"] == "forced_transparent":
+            bg_desc = BG_OPTIONS["Transparent"]
+            st.caption("Background: transparent (fixed for stickers).")
+        elif cfg["bg"] == "forced_white":
+            bg_desc = BG_OPTIONS["Plain white"]
+            st.caption("Background: plain white (fixed for easy cutting and laminating).")
+        else:
+            bg_desc = None
 
     sig1 = (mode, theme, count, style_name)
     if st.button("Build Step 1 prompt"):
         if not theme.strip():
-            st.warning("Enter a theme first.")
+            st.warning("Fill in the field above first.")
+        elif mode == MASCOT_MODE:
+            _stash("shotlist_prompt", sig1, build_mascot_shotlist_prompt(theme.strip(), int(count), style_desc))
         else:
             _stash("shotlist_prompt", sig1, build_shotlist_prompt(mode, theme.strip(), int(count), style_desc, bg_desc))
 
@@ -306,11 +474,21 @@ with tab2:
                 "Could not find any items. Make sure the pasted text still has the "
                 f"'=== {marker_for(mode)} 0X ===' markers with NAME: and DESCRIPTION: lines."
             )
-        else:
-            if mode == "Clipart set":
-                prompts = [build_clipart_item_prompt(n, d, style_desc, bg_desc) for n, d in items]
+        elif mode == MASCOT_MODE:
+            bible = parse_mascot_bible(shotlist)
+            if not bible:
+                st.warning(
+                    "Could not find the Character Bible block. Make sure the pasted text "
+                    "still has the '=== CHARACTER BIBLE START/END ===' markers."
+                )
             else:
-                prompts = [build_mockup_item_prompt(n, d, style_desc) for n, d in items]
+                prompts = [build_mascot_pose_prompt(bible, n, d, style_desc) for n, d in items]
+                _stash("item_prompts", sig2, list(zip([n for n, d in items], prompts)))
+        elif mode == "Listing mockup scenes":
+            prompts = [build_mockup_item_prompt(n, d, style_desc) for n, d in items]
+            _stash("item_prompts", sig2, list(zip([n for n, d in items], prompts)))
+        else:
+            prompts = [build_item_prompt(mode, n, d, style_desc, bg_desc) for n, d in items]
             _stash("item_prompts", sig2, list(zip([n for n, d in items], prompts)))
 
     built = _recall("item_prompts", sig2)
@@ -343,9 +521,10 @@ with tab3:
                 "then come back here."
             )
         else:
+            bible = parse_mascot_bible(shotlist) if mode == MASCOT_MODE else ""
             _stash(
                 "cover_prompt", sig3,
-                build_collection_cover_prompt(mode, cover_items, style_desc, bg_desc, cover_title),
+                build_collection_cover_prompt(mode, cover_items, style_desc, bg_desc, cover_title, bible),
             )
 
     out3 = _recall("cover_prompt", sig3)
