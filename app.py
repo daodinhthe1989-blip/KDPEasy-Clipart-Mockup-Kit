@@ -112,6 +112,12 @@ DECOR_STYLES = {
     "Chalkboard": "a chalkboard-style look: clean white or pastel chalk-line art on a solid dark background",
 }
 
+PIN_STYLES = {
+    "Bold & bright": "a bold, colorful Pinterest pin: bright background color, bold sans-serif headline text, high contrast, clean modern layout",
+    "Clean minimal": "a clean minimal Pinterest pin: soft neutral background, simple elegant headline typography, generous white space",
+    "Cozy lifestyle": "a warm, cozy Pinterest pin: soft lifestyle-style background, friendly handwritten-style headline text, an inviting feel",
+}
+
 BG_OPTIONS = {
     "Transparent": "a fully transparent background (PNG-ready, nothing behind the object)",
     "Plain white": "a plain solid white background",
@@ -153,9 +159,19 @@ MODE_UI = {
         "styles": DECOR_STYLES,
         "bg": "forced_white",
     },
+    "Pinterest Pin Graphics": {
+        "count_label": "Number of pin designs",
+        "count_default": 6, "count_min": 3, "count_max": 12,
+        "styles": PIN_STYLES,
+        "bg": "none",
+    },
 }
 MASCOT_MODE = "Mascot pose pack"
 MODES = list(MODE_UI.keys()) + [MASCOT_MODE]
+
+# Modes where the customer uploads their own product image as a fixed
+# reference, instead of generating a brand-new isolated object/pattern.
+UPLOAD_MODES = {"Listing mockup scenes", "Pinterest Pin Graphics"}
 
 MARKERS = {
     "Clipart set": "ITEM",
@@ -163,6 +179,7 @@ MARKERS = {
     "Digital paper pack": "PATTERN",
     "Planner stickers": "STICKER",
     "Classroom decor set": "ITEM",
+    "Pinterest Pin Graphics": "PIN",
     MASCOT_MODE: "POSE",
 }
 
@@ -172,6 +189,7 @@ OPENER = {
     "Digital paper pack": "a themed digital paper (pattern) pack",
     "Planner stickers": "a themed planner sticker pack",
     "Classroom decor set": "a themed classroom decor set",
+    "Pinterest Pin Graphics": "Pinterest pin graphics for a product",
 }
 
 NOUNS = {
@@ -180,6 +198,7 @@ NOUNS = {
     "Digital paper pack": "pattern designs",
     "Planner stickers": "individual sticker ideas",
     "Classroom decor set": "individual decor elements",
+    "Pinterest Pin Graphics": "different Pinterest pin design ideas",
 }
 
 ITEM_GUIDANCE = {
@@ -188,6 +207,7 @@ ITEM_GUIDANCE = {
     "Digital paper pack": "Each one should be a distinct color-and-motif combination that could repeat seamlessly as a background pattern.",
     "Planner stickers": "Each one should be a single simple icon, tracker, or short-phrase idea - the kind of small sticker someone adds to a planner page.",
     "Classroom decor set": "Each one should be a distinct, simple decor piece (a label, a border motif, a small graphic), not a busy scene.",
+    "Pinterest Pin Graphics": "Each one should pair a different short, scroll-stopping headline with a different visual angle or layout - not a repeat of the same hook.",
 }
 
 DESC_GUIDANCE = {
@@ -196,6 +216,7 @@ DESC_GUIDANCE = {
     "Digital paper pack": 'one plain sentence describing the color palette and motif (for example, "mustard and cream, small falling leaves")',
     "Planner stickers": "one plain sentence describing the icon and any short text on it",
     "Classroom decor set": "one plain sentence describing what it looks like and what it is for (border strip, label, banner piece, and so on)",
+    "Pinterest Pin Graphics": "one plain sentence giving the headline text to use and the visual layout or angle (do not mention the product itself - that gets added separately)",
 }
 
 CLOSING_LINE = {
@@ -221,7 +242,7 @@ def marker_for(mode: str) -> str:
 def build_shotlist_prompt(mode: str, theme: str, count: int, style_desc: str, bg_desc) -> str:
     marker = marker_for(mode)
     last = f"{marker} {count:02d}"
-    theme_word = "PRODUCT OR THEME" if mode == "Listing mockup scenes" else "THEME"
+    theme_word = "PRODUCT OR THEME" if mode in UPLOAD_MODES else "THEME"
     style_line = f"Style for reference (do not repeat this in the list): {style_desc}"
     style_line += f", on {bg_desc}." if bg_desc else "."
     return (
@@ -315,6 +336,21 @@ def build_mockup_item_prompt(name: str, desc: str, style_desc: str) -> str:
     )
 
 
+def build_pin_item_prompt(name: str, desc: str, style_desc: str) -> str:
+    return (
+        f"Upload a screenshot or photo of your product before using this prompt.\n\n"
+        f"Use the uploaded image as a fixed reference - do not redraw, alter, or reinterpret "
+        f"what is on it.\n\n"
+        f"PIN CONCEPT: {name} - {desc}\n"
+        f"STYLE: {style_desc}.\n\n"
+        f"Make this a vertical Pinterest pin, about 1000 x 1500 pixels (a 2:3 portrait ratio). "
+        f"Place the uploaded image into the design and add the headline text from the pin "
+        f"concept above in large, easy-to-read lettering. Leave a small clear area near the "
+        f"bottom for a shop name or logo. Keep the uploaded content exactly as it is - only "
+        f"add the surrounding pin design around it."
+    )
+
+
 def build_mascot_pose_prompt(bible: str, name: str, desc: str, style_desc: str) -> str:
     return (
         f"{NO_EDIT_LINE}\n\n"
@@ -371,6 +407,8 @@ MODE_KEYWORDS = {
                           "bullet journal", "productivity", "sticker"],
     "Classroom decor set": ["classroom", "teacher", "bulletin board", "school",
                              "student", "teaching", "homeschool"],
+    "Pinterest Pin Graphics": ["pinterest", "pin", "traffic", "new shop", "social media",
+                               "etsy", "tpt", "printable", "planner"],
     MASCOT_MODE: ["mascot", "character", "brand", "logo", "avatar", "consistent character"],
 }
 
@@ -380,6 +418,7 @@ MODE_REASON = {
     "Digital paper pack": "fits scrapbook, card-making, or craft-style products - usually paired with a clipart set.",
     "Planner stickers": "fits planner, productivity, or bullet-journal products.",
     "Classroom decor set": "fits classroom or homeschool-teaching products - the most TPT-native use case.",
+    "Pinterest Pin Graphics": "fits Etsy or TPT sellers who need outside traffic, especially a brand-new shop with no search history yet.",
     MASCOT_MODE: "fits a product that needs a consistent recurring character or brand mascot.",
 }
 
@@ -401,6 +440,9 @@ MODE_BENEFIT = {
     "Classroom decor set": ("Buyers get ready classroom decor - labels, banners, borders - that "
                              "matches their teaching materials. Strong fit when the core product is "
                              "itself used in a classroom or homeschool setting."),
+    "Pinterest Pin Graphics": ("Buyers get ready-to-use Pinterest pin designs that drive outside "
+                               "traffic to their own listing - most valuable for a brand-new shop "
+                               "that does not have Etsy or TPT search traffic yet."),
     MASCOT_MODE: ("Buyers get one consistent character they can reuse across their own branding or "
                   "materials - useful when a recognizable recurring mascot adds value (a class "
                   "mascot, a shop mascot)."),
@@ -532,6 +574,9 @@ with st.expander("How this kit works"):
         "**Planner stickers** - transparent die-cut-style stickers for digital or printed "
         "planners.\n\n"
         "**Classroom decor set** - bulletin board and labeling graphics, printed and laminated.\n\n"
+        "**Pinterest Pin Graphics** - upload a real screenshot or photo of your product first; "
+        "each prompt turns it into a vertical Pinterest pin with a headline, for driving outside "
+        "traffic to an Etsy or TPT listing.\n\n"
         "**Mascot pose pack** - one consistent character in many poses, for a recurring brand "
         "or classroom mascot. Step 1 also writes a Character Bible that every pose reuses so "
         "the character does not drift.\n\n"
@@ -613,6 +658,9 @@ with tab2:
                 _stash("item_prompts", sig2, list(zip([n for n, d in items], prompts)))
         elif mode == "Listing mockup scenes":
             prompts = [build_mockup_item_prompt(n, d, style_desc) for n, d in items]
+            _stash("item_prompts", sig2, list(zip([n for n, d in items], prompts)))
+        elif mode == "Pinterest Pin Graphics":
+            prompts = [build_pin_item_prompt(n, d, style_desc) for n, d in items]
             _stash("item_prompts", sig2, list(zip([n for n, d in items], prompts)))
         else:
             prompts = [build_item_prompt(mode, n, d, style_desc, bg_desc) for n, d in items]
