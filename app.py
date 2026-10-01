@@ -125,6 +125,22 @@ PIN_STYLES = {
     "Cozy lifestyle": "a warm, cozy Pinterest pin: soft lifestyle-style background, friendly handwritten-style headline text, an inviting feel",
 }
 
+COLORING_STYLES = {
+    "Bold & simple": ("bold, simple coloring-page line art: thick, smooth, even black outlines, "
+                       "large simple shapes, almost no small detail, wide open areas to color"),
+    "More detail": ("clean, even, medium-weight coloring-page line art: a little more detail and "
+                     "smaller elements, still simple and fully closed shapes"),
+}
+
+PLANNER_STYLES = {
+    "Minimal & clean": ("a minimal, clean planner page layout: thin even black lines, plenty of "
+                         "white space, simple sans-serif-style header lettering"),
+    "Soft pastel": ("a soft pastel planner page layout: gentle colored section dividers, light "
+                     "decorative accents in the corners only"),
+    "Bold & colorful": ("a bold, colorful planner page layout: bright section headers, clear "
+                         "colored dividing lines, cheerful decorative accents in the corners only"),
+}
+
 BG_OPTIONS = {
     "Transparent": "a fully transparent background (PNG-ready, nothing behind the object)",
     "Plain white": "a plain solid white background",
@@ -172,6 +188,18 @@ MODE_UI = {
         "styles": PIN_STYLES,
         "bg": "none",
     },
+    "Coloring book pages": {
+        "count_label": "Number of pages",
+        "count_default": 10, "count_min": 4, "count_max": 30,
+        "styles": COLORING_STYLES,
+        "bg": "forced_white",
+    },
+    "Planner pages": {
+        "count_label": "Number of page layouts",
+        "count_default": 8, "count_min": 3, "count_max": 20,
+        "styles": PLANNER_STYLES,
+        "bg": "forced_white",
+    },
 }
 MASCOT_MODE = "Mascot pose pack"
 MODES = list(MODE_UI.keys()) + [MASCOT_MODE]
@@ -187,6 +215,8 @@ MARKERS = {
     "Planner stickers": "STICKER",
     "Classroom decor set": "ITEM",
     "Pinterest Pin Graphics": "PIN",
+    "Coloring book pages": "PAGE",
+    "Planner pages": "PAGE",
     MASCOT_MODE: "POSE",
 }
 
@@ -197,6 +227,8 @@ OPENER = {
     "Planner stickers": "a themed planner sticker pack",
     "Classroom decor set": "a themed classroom decor set",
     "Pinterest Pin Graphics": "Pinterest pin graphics for a product",
+    "Coloring book pages": "a themed coloring book (line art pages to color)",
+    "Planner pages": "a themed set of planner page layouts",
 }
 
 NOUNS = {
@@ -206,6 +238,8 @@ NOUNS = {
     "Planner stickers": "individual sticker ideas",
     "Classroom decor set": "individual decor elements",
     "Pinterest Pin Graphics": "different Pinterest pin design ideas",
+    "Coloring book pages": "individual coloring page scenes",
+    "Planner pages": "different planner page layouts",
 }
 
 ITEM_GUIDANCE = {
@@ -215,6 +249,8 @@ ITEM_GUIDANCE = {
     "Planner stickers": "Each one should be a single simple icon, tracker, or short-phrase idea - the kind of small sticker someone adds to a planner page.",
     "Classroom decor set": "Each one should be a distinct, simple decor piece (a label, a border motif, a small graphic), not a busy scene.",
     "Pinterest Pin Graphics": "Each one should pair a different short, scroll-stopping headline with a different visual angle or layout - not a repeat of the same hook.",
+    "Coloring book pages": "Each one should be a complete, simple scene that fills the page, good for coloring - not a repeat of the same scene.",
+    "Planner pages": "Each one should be a different page TYPE (for example a weekly spread, a habit tracker, a goal-setting page, a notes page) - not a repeat of the same layout.",
 }
 
 DESC_GUIDANCE = {
@@ -224,6 +260,10 @@ DESC_GUIDANCE = {
     "Planner stickers": "one plain sentence describing the icon and any short text on it",
     "Classroom decor set": "one plain sentence describing what it looks like and what it is for (border strip, label, banner piece, and so on)",
     "Pinterest Pin Graphics": "one plain sentence giving the headline text to use and the visual layout or angle (do not mention the product itself - that gets added separately)",
+    "Coloring book pages": "one plain sentence describing the scene and its main elements (no mood, shading, or color words)",
+    "Planner pages": ('one plain sentence describing the page type and its main sections (for '
+                       'example, "a weekly spread with seven day columns and a notes strip at '
+                       'the bottom")'),
 }
 
 CLOSING_LINE = {
@@ -239,6 +279,12 @@ CLOSING_LINE = {
     "Classroom decor set": ("One isolated decor element, centered in the frame, bold and simple "
                              "enough to read from across a room. Sized to print, cut out, and "
                              "laminate."),
+    "Coloring book pages": ("A complete scene that fills the page. Bold, even black outlines "
+                             "only - no shading, no gray, no color, no background texture. "
+                             "Every shape fully closed so it is easy to color."),
+    "Planner pages": ("Make every line straight and every section evenly spaced, like a real "
+                       "printable page someone can write on. Keep any decoration in the header "
+                       "or corners only, never inside a writing area."),
 }
 
 
@@ -416,6 +462,9 @@ MODE_KEYWORDS = {
                              "student", "teaching", "homeschool"],
     "Pinterest Pin Graphics": ["pinterest", "pin", "traffic", "new shop", "social media",
                                "etsy", "tpt", "printable", "planner"],
+    "Coloring book pages": ["coloring", "color page", "kids", "children", "activity book", "line art"],
+    "Planner pages": ["planner", "goodnotes", "notability", "daily planner", "weekly planner",
+                       "productivity", "journal", "habit tracker"],
     MASCOT_MODE: ["mascot", "character", "brand", "logo", "avatar", "consistent character"],
 }
 
@@ -426,6 +475,8 @@ MODE_REASON = {
     "Planner stickers": "fits planner, productivity, or bullet-journal products.",
     "Classroom decor set": "fits classroom or homeschool-teaching products - the most TPT-native use case.",
     "Pinterest Pin Graphics": "fits Etsy or TPT sellers who need outside traffic, especially a brand-new shop with no search history yet.",
+    "Coloring book pages": "fits a free gift for a kids or family-oriented product - meant as a bonus, not something to sell on its own given how saturated coloring books are.",
+    "Planner pages": "fits planner, productivity, or journaling products that need extra printable pages to round out the set.",
     MASCOT_MODE: "fits a product that needs a consistent recurring character or brand mascot.",
 }
 
@@ -450,6 +501,13 @@ MODE_BENEFIT = {
     "Pinterest Pin Graphics": ("Buyers get ready-to-use Pinterest pin designs that drive outside "
                                "traffic to their own listing - most valuable for a brand-new shop "
                                "that does not have Etsy or TPT search traffic yet."),
+    "Coloring book pages": ("Buyers (or their kids) get a themed coloring activity as a "
+                             "feel-good extra. Works best as a free bonus rather than a "
+                             "standalone product - the plain coloring-book market is heavily "
+                             "saturated to sell on its own."),
+    "Planner pages": ("Buyers get extra printable planner pages that match their own planner "
+                       "product - useful for rounding out a thin page count or covering a page "
+                       "type they did not include."),
     MASCOT_MODE: ("Buyers get one consistent character they can reuse across their own branding or "
                   "materials - useful when a recognizable recurring mascot adds value (a class "
                   "mascot, a shop mascot)."),
@@ -641,6 +699,10 @@ with st.expander("How this kit works"):
         "**Pinterest Pin Graphics** - upload a real screenshot or photo of your product first; "
         "each prompt turns it into a vertical Pinterest pin with a headline, for driving outside "
         "traffic to an Etsy or TPT listing.\n\n"
+        "**Coloring book pages** - line art scenes to color, white background. Meant as a free "
+        "gift, not something to sell on its own - plain coloring books are heavily saturated.\n\n"
+        "**Planner pages** - full-page layouts (weekly spreads, trackers, goal pages). ChatGPT's "
+        "grid lines are not always perfectly straight - check each page before printing.\n\n"
         "**Mascot pose pack** - one consistent character in many poses, for a recurring brand "
         "or classroom mascot. Step 1 also writes a Character Bible that every pose reuses so "
         "the character does not drift.\n\n"
@@ -653,7 +715,12 @@ with st.expander("How this kit works"):
 tab1, tab2, tab3 = st.tabs(["Step 1 - Shot list", "Step 2 - Image prompts", "Step 3 - Collection cover"])
 
 with tab1:
-    theme = st.text_input(theme_label, help=theme_help)
+    theme = st.text_input(theme_label, help=theme_help, max_chars=200)
+    st.caption(
+        "Keep this short - a phrase or a sentence, not a full sales page. To get a bonus "
+        "idea from a whole product description, use \"Describe what you're promoting\" above "
+        "instead."
+    )
 
     if mode == MASCOT_MODE:
         count = st.number_input("Number of poses", min_value=4, max_value=30, value=10)
