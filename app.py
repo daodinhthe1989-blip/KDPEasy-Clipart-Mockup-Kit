@@ -188,6 +188,29 @@ def build_mockup_item_prompt(name: str, desc: str, style_desc: str) -> str:
     )
 
 
+def build_collection_cover_prompt(mode: str, items, style_desc: str, bg_desc, title: str) -> str:
+    """One listing/cover photo showing the whole set together - the main thumbnail
+    buyers see on Etsy or TPT before they open the listing."""
+    noun = "clipart elements" if mode == "Clipart set" else "scenes"
+    listing = "\n".join(f"- {name}: {desc}" for name, desc in items)
+    bg_line = f"BACKGROUND: {bg_desc}.\n" if bg_desc else ""
+    title_line = (
+        f'Add the text "{title}" as a small, clean label near the top of the image.\n'
+        if title.strip() else ""
+    )
+    return (
+        f"Create ONE image that works as a single cover/preview photo for this set - the main "
+        f"thumbnail a shopper sees before opening the listing.\n\n"
+        f"Arrange all {len(items)} {noun} below together in a tidy grid or flat-lay layout, each "
+        f"one fully visible, evenly spaced, not overlapping or cropped.\n\n"
+        f"ITEMS:\n{listing}\n\n"
+        f"STYLE: {style_desc}.\n"
+        f"{bg_line}"
+        f"{title_line}"
+        f"Keep every item in the same consistent style and proportion as the rest."
+    )
+
+
 # ----------------------------------------------------------------------------
 # UI
 # ----------------------------------------------------------------------------
@@ -222,16 +245,22 @@ with st.expander("How this kit works"):
         "2. Paste that prompt into ChatGPT. It replies with a numbered list.\n"
         "3. Paste that reply into Step 2. The kit turns every line into its own image prompt, "
         "already locked to one consistent style.\n"
-        "4. Run each Step 2 prompt in the same ChatGPT chat so everything matches.\n\n"
+        "4. Run each Step 2 prompt in the same ChatGPT chat so everything matches.\n"
+        "5. Step 3 builds one more prompt: a single cover photo showing the whole set together "
+        "- the main listing thumbnail for Etsy or TPT.\n\n"
         "**Clipart set** - isolated objects, transparent or white background, for a themed "
         "graphics pack.\n\n"
         "**Listing mockup scenes** - upload a real screenshot or page of your product first; "
         "each prompt places it into a styled scene for your Etsy or TPT listing photos. "
         "Note: ChatGPT does not always keep the uploaded content perfectly untouched - check "
-        "each result before using it."
+        "each result before using it.\n\n"
+        "**About the Step 3 cover:** it draws a brand-new illustration of the whole set "
+        "together, so it may look slightly different from the individual images from Step 2. "
+        "It is a fast way to get a listing photo. For a pixel-exact thumbnail, arrange your "
+        "finished Step 2 images yourself in Canva or a similar tool instead."
     )
 
-tab1, tab2 = st.tabs(["Step 1 - Shot list", "Step 2 - Image prompts"])
+tab1, tab2, tab3 = st.tabs(["Step 1 - Shot list", "Step 2 - Image prompts", "Step 3 - Collection cover"])
 
 with tab1:
     theme = st.text_input(theme_label, value=theme_default, help=theme_help)
@@ -294,6 +323,37 @@ with tab2:
             st.code(p, language=None)
     else:
         st.caption("Paste a shot list above, then click \"Build Step 2 prompts\".")
+
+with tab3:
+    st.caption(
+        "One extra prompt: a single cover photo showing every item in this set together - "
+        "the main image buyers see on an Etsy or TPT listing before they click in."
+    )
+    cover_title = st.text_input(
+        "Collection title to show on the cover (optional)",
+        placeholder='e.g. "Cozy Autumn Harvest - 12 PNG Clipart Graphics"',
+    )
+
+    sig3 = (mode, shotlist, style_name, bg_desc, cover_title)
+    if st.button("Build collection cover prompt"):
+        cover_items = parse_items(shotlist, mode)
+        if not cover_items:
+            st.warning(
+                "Could not find any items in Step 2's pasted text. Fill in Step 2 first, "
+                "then come back here."
+            )
+        else:
+            _stash(
+                "cover_prompt", sig3,
+                build_collection_cover_prompt(mode, cover_items, style_desc, bg_desc, cover_title),
+            )
+
+    out3 = _recall("cover_prompt", sig3)
+    if out3:
+        st.code(out3, language=None)
+        st.download_button("Download this prompt (.txt)", out3, file_name="step3_cover_prompt.txt")
+    else:
+        st.caption("Fill in Step 2's shot list first, then click \"Build collection cover prompt\".")
 
 st.divider()
 st.caption("KDPEasy Studio - kdpeasy.studio")
