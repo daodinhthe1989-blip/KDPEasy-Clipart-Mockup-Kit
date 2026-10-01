@@ -383,6 +383,29 @@ MODE_REASON = {
     MASCOT_MODE: "fits a product that needs a consistent recurring character or brand mascot.",
 }
 
+# What picking this mode actually gets the buyer, in plain terms - shown so
+# the person choosing a bonus can see the payoff, not just "this fits".
+MODE_BENEFIT = {
+    "Clipart set": ("Buyers get themed graphics they can drop straight into their own designs - "
+                     "no design skill needed. Best when they'll keep customizing what they bought "
+                     "(templates, workbooks, print-on-demand items)."),
+    "Listing mockup scenes": ("Buyers get ready-made prompts to turn their own product pages into "
+                               "professional Etsy or TPT listing photos. Most useful when they plan "
+                               "to resell or list what they just bought (PLR, templates, planners)."),
+    "Digital paper pack": ("Buyers get matching background patterns to pair with their own layouts "
+                            "- a natural add-on for scrapbook, card-making, or paper-craft products, "
+                            "not a strong standalone draw by itself."),
+    "Planner stickers": ("Buyers get a themed sticker set to use inside their own planner or "
+                          "productivity product - a direct companion to anything in the planner or "
+                          "bullet-journal niche."),
+    "Classroom decor set": ("Buyers get ready classroom decor - labels, banners, borders - that "
+                             "matches their teaching materials. Strong fit when the core product is "
+                             "itself used in a classroom or homeschool setting."),
+    MASCOT_MODE: ("Buyers get one consistent character they can reuse across their own branding or "
+                  "materials - useful when a recognizable recurring mascot adds value (a class "
+                  "mascot, a shop mascot)."),
+}
+
 
 def suggest_modes(description: str):
     text = description.lower()
@@ -393,6 +416,22 @@ def suggest_modes(description: str):
             scores.append((mode, len(matched), matched))
     scores.sort(key=lambda row: -row[1])
     return scores
+
+
+def build_explain_prompt(description: str, mode: str) -> str:
+    """The keyword matcher above only sees words, not what the product actually
+    does - it can suggest a bonus that is secretly redundant with something the
+    product already includes. This hands that judgement to ChatGPT, which can
+    actually read the pasted description."""
+    return (
+        f"Here is a product description or sales page:\n\n"
+        f"{description.strip()}\n\n"
+        f'I am considering offering "{mode}" as a free bonus to buyers of this product. '
+        f"{mode} {MODE_REASON[mode]}\n\n"
+        f"In 2 to 3 sentences, explain specifically how this bonus would help someone who buys "
+        f"the product described above. Be honest: if this bonus would be redundant with "
+        f"something the product already includes, say so plainly instead of forcing a fit."
+    )
 
 
 # ----------------------------------------------------------------------------
@@ -421,8 +460,9 @@ else:
 
 st.subheader("Not sure which type to use?")
 promo_desc = st.text_area(
-    "Describe what you're promoting (product name, niche, what it includes)",
-    height=80,
+    "Describe what you're promoting (product name, niche, what it includes - "
+    "pasting the whole sales page works too)",
+    height=160,
     placeholder='e.g. "A PLR bundle of 50 Canva planner templates for busy moms"',
 )
 if st.button("Suggest a bonus type"):
@@ -442,6 +482,20 @@ if suggestions is not None:
             with col_text:
                 st.markdown(f"**{i+1}. {sugg_mode}** - {MODE_REASON[sugg_mode]}")
                 st.caption("Matched words: " + ", ".join(matched))
+                st.markdown(f"_If you pick this: {MODE_BENEFIT[sugg_mode]}_")
+                with st.expander("Explain this for my specific product (ask ChatGPT)"):
+                    st.caption(
+                        "The matching above only looks at words. Paste this into ChatGPT to "
+                        "get a real answer for your product - including whether this bonus "
+                        "would actually be redundant with something it already includes."
+                    )
+                    explain_prompt = build_explain_prompt(promo_desc, sugg_mode)
+                    st.code(explain_prompt, language=None)
+                    st.download_button(
+                        "Download this prompt (.txt)", explain_prompt,
+                        file_name=f"explain_{sugg_mode.lower().replace(' ', '_')}.txt",
+                        key=f"dl_explain_{i}",
+                    )
             with col_btn:
                 if st.button("Use this", key=f"use_suggestion_{i}"):
                     st.session_state["mode_radio"] = sugg_mode
