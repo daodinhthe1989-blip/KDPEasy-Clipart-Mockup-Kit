@@ -356,6 +356,46 @@ def build_collection_cover_prompt(mode: str, items, style_desc: str, bg_desc, ti
 
 
 # ----------------------------------------------------------------------------
+# Mode suggestion. Plain keyword matching, no API call - keeps the whole tool
+# zero-cost. It is a pointer, not a verdict: ties and near-misses are common,
+# so the UI always lets the customer pick manually too.
+# ----------------------------------------------------------------------------
+MODE_KEYWORDS = {
+    "Clipart set": ["template", "canva", "design", "plr", "graphic", "scrapbook",
+                    "card making", "craft", "svg", "decorate", "diy", "resell", "mrr"],
+    "Listing mockup scenes": ["pdf", "ebook", "e-book", "worksheet", "workbook", "course",
+                               "guide", "listing", "etsy", "tpt", "digital download", "printable"],
+    "Digital paper pack": ["pattern", "scrapbook", "card making", "background",
+                            "paper craft", "digital paper"],
+    "Planner stickers": ["planner", "goodnotes", "notability", "digital planner",
+                          "bullet journal", "productivity", "sticker"],
+    "Classroom decor set": ["classroom", "teacher", "bulletin board", "school",
+                             "student", "teaching", "homeschool"],
+    MASCOT_MODE: ["mascot", "character", "brand", "logo", "avatar", "consistent character"],
+}
+
+MODE_REASON = {
+    "Clipart set": "fits products buyers use as raw material to build their own designs.",
+    "Listing mockup scenes": "fits any finished digital download that needs a professional listing photo.",
+    "Digital paper pack": "fits scrapbook, card-making, or craft-style products - usually paired with a clipart set.",
+    "Planner stickers": "fits planner, productivity, or bullet-journal products.",
+    "Classroom decor set": "fits classroom or homeschool-teaching products - the most TPT-native use case.",
+    MASCOT_MODE: "fits a product that needs a consistent recurring character or brand mascot.",
+}
+
+
+def suggest_modes(description: str):
+    text = description.lower()
+    scores = []
+    for mode, keywords in MODE_KEYWORDS.items():
+        matched = [kw for kw in keywords if kw in text]
+        if matched:
+            scores.append((mode, len(matched), matched))
+    scores.sort(key=lambda row: -row[1])
+    return scores
+
+
+# ----------------------------------------------------------------------------
 # UI
 # ----------------------------------------------------------------------------
 if not check_password():
@@ -379,7 +419,40 @@ else:
     theme_label = "Theme"
     theme_help = 'What the whole set is about. Keep it specific - "Cozy Autumn Harvest" beats "Fall".'
 
-mode = st.radio("What do you want to create?", MODES)
+st.subheader("Not sure which type to use?")
+promo_desc = st.text_area(
+    "Describe what you're promoting (product name, niche, what it includes)",
+    height=80,
+    placeholder='e.g. "A PLR bundle of 50 Canva planner templates for busy moms"',
+)
+if st.button("Suggest a bonus type"):
+    _stash("suggestions", promo_desc, suggest_modes(promo_desc))
+
+suggestions = _recall("suggestions", promo_desc)
+if suggestions is not None:
+    if not suggestions:
+        st.info(
+            "No strong match found. \"Listing mockup scenes\" is the safest default - it fits "
+            "almost any finished digital product. Pick a mode manually below if you have a "
+            "more specific idea."
+        )
+    else:
+        for i, (sugg_mode, score, matched) in enumerate(suggestions[:3]):
+            col_text, col_btn = st.columns([4, 1])
+            with col_text:
+                st.markdown(f"**{i+1}. {sugg_mode}** - {MODE_REASON[sugg_mode]}")
+                st.caption("Matched words: " + ", ".join(matched))
+            with col_btn:
+                if st.button("Use this", key=f"use_suggestion_{i}"):
+                    st.session_state["mode_radio"] = sugg_mode
+                    st.rerun()
+    st.caption(
+        "This is simple keyword matching, not real judgement - treat it as a starting point, "
+        "not a final answer."
+    )
+
+st.divider()
+mode = st.radio("What do you want to create?", MODES, key="mode_radio")
 
 if mode == MASCOT_MODE:
     theme_label = "Character description"
