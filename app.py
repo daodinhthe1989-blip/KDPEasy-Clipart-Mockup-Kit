@@ -715,7 +715,7 @@ with st.expander("How this kit works"):
 tab1, tab2, tab3 = st.tabs(["Step 1 - Shot list", "Step 2 - Image prompts", "Step 3 - Collection cover"])
 
 with tab1:
-    theme = st.text_input(theme_label, help=theme_help, max_chars=200)
+    theme = st.text_input(theme_label, help=theme_help)
     st.caption(
         "Keep this short - a phrase or a sentence, not a full sales page. To get a bonus "
         "idea from a whole product description, use \"Describe what you're promoting\" above "
@@ -750,6 +750,12 @@ with tab1:
     if st.button("Build Step 1 prompt"):
         if not theme.strip():
             st.warning("Fill in the field above first.")
+        elif len(theme.strip()) > 200:
+            st.warning(
+                f"That's {len(theme.strip())} characters - too long for a theme (a sales page, "
+                "not a short phrase). Shorten it to a phrase or a sentence, or use \"Describe "
+                "what you're promoting\" above instead, which is built for full descriptions."
+            )
         elif mode == MASCOT_MODE:
             _stash("shotlist_prompt", sig1, build_mascot_shotlist_prompt(theme.strip(), int(count), style_desc))
         else:
