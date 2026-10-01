@@ -691,7 +691,15 @@ with tab1:
     out1 = _recall("shotlist_prompt", sig1)
     if out1:
         st.code(out1, language=None)
-        st.download_button("Download this prompt (.txt)", out1, file_name="step1_shotlist_prompt.txt")
+        dl1a, dl1b = st.columns(2)
+        with dl1a:
+            st.download_button("Download (.txt)", out1, file_name="step1_shotlist_prompt.txt")
+        with dl1b:
+            st.download_button(
+                "Download (PDF)",
+                build_pdf_bytes(f"{mode} - Shot-list Prompt", mode, out1, [], ""),
+                file_name="step1_shotlist_prompt.pdf", mime="application/pdf",
+            )
     else:
         st.caption("Changed something above? Click \"Build Step 1 prompt\" again.")
 
@@ -734,7 +742,15 @@ with tab2:
     if built:
         st.success(f"Built {len(built)} prompt(s).")
         all_text = "\n\n---\n\n".join(f"{i+1}. {name}\n\n{p}" for i, (name, p) in enumerate(built))
-        st.download_button("Download all prompts (.txt)", all_text, file_name="step2_image_prompts.txt")
+        dl2a, dl2b = st.columns(2)
+        with dl2a:
+            st.download_button("Download all (.txt)", all_text, file_name="step2_image_prompts.txt")
+        with dl2b:
+            st.download_button(
+                "Download all (PDF)",
+                build_pdf_bytes(f"{mode} - Prompt Pack", mode, "", built, ""),
+                file_name="step2_image_prompts.pdf", mime="application/pdf",
+            )
         for i, (name, p) in enumerate(built):
             st.markdown(f"**{i+1}. {name}**")
             st.code(p, language=None)
@@ -769,31 +785,17 @@ with tab3:
     out3 = _recall("cover_prompt", sig3)
     if out3:
         st.code(out3, language=None)
-        st.download_button("Download this prompt (.txt)", out3, file_name="step3_cover_prompt.txt")
+        dl3a, dl3b = st.columns(2)
+        with dl3a:
+            st.download_button("Download (.txt)", out3, file_name="step3_cover_prompt.txt")
+        with dl3b:
+            st.download_button(
+                "Download (PDF)",
+                build_pdf_bytes(f"{mode} - Cover Prompt", mode, "", [], out3),
+                file_name="step3_cover_prompt.pdf", mime="application/pdf",
+            )
     else:
         st.caption("Fill in Step 2's shot list first, then click \"Build collection cover prompt\".")
-
-st.divider()
-st.subheader("Package this as a gift")
-st.caption(
-    "Bundles everything you've built above into one PDF - attach it to an email or a thank-you "
-    "page without the recipient needing to open this tool at all."
-)
-pack_title = st.text_input("Pack title for the PDF", value=theme or f"{mode} Prompt Pack")
-
-shotlist_prompt_now = _recall("shotlist_prompt", sig1)
-item_prompts_now = _recall("item_prompts", sig2)
-cover_prompt_now = _recall("cover_prompt", sig3)
-
-if not shotlist_prompt_now and not item_prompts_now:
-    st.caption("Build Step 1 and Step 2 above first, then come back here to download the PDF.")
-else:
-    pdf_bytes = build_pdf_bytes(pack_title, mode, shotlist_prompt_now, item_prompts_now, cover_prompt_now)
-    safe_name = re.sub(r"[^A-Za-z0-9_-]+", "_", pack_title.strip()) or "prompt_pack"
-    st.download_button(
-        "Download full prompt pack (PDF)", pdf_bytes,
-        file_name=f"{safe_name}.pdf", mime="application/pdf",
-    )
 
 st.divider()
 st.caption("KDPEasy Studio - kdpeasy.studio")
